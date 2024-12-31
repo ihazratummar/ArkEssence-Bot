@@ -22,6 +22,7 @@ exts = {
     "cogs.error",
     "cogs.welcomer",
     "cogs.ticket.ticket",
+    "cogs.essence.report",
 }
 
 class Bot(commands.Bot):
