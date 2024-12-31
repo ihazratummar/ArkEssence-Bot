@@ -12,4 +12,8 @@ class Utils(commands.Cog):
         await ctx.send('Pong!')
 
     
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Utils(bot))
     

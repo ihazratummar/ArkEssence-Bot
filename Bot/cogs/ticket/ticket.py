@@ -23,4 +23,6 @@ class Ticket(commands.Cog):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Ticket(bot))
+    bot.add_view(CreateButton())  # Add the view to the bot
+    
     

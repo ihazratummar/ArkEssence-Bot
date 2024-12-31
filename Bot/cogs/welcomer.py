@@ -13,8 +13,11 @@ class Welcomer(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         if member.bot:
+            roles_id = [1014126609890029650, 1013016741464526911]
+            roles = [member.guild.get_role(role_id) for role_id in roles_id]
+            if roles[0] is not None:
+                await member.add_roles(*roles)
             return
-
 
         channel_id = 1322481571995062332
         channel = member.guild.get_channel(channel_id)
@@ -34,6 +37,8 @@ class Welcomer(commands.Cog):
         embed.add_field(name="", value="Happy gaming,\nArk Essence Staff", inline=False)
         embed.set_thumbnail(url=member.avatar._url)
         embed.set_image(url="https://media.discordapp.net/attachments/1013016741984608280/1323105720178053212/Ark_Essence_4.gif?ex=67734db9&is=6771fc39&hm=175b534f3daf4d5f6413c3cffaaf58db28dff750e2225f7bba5c9d7c42c4c658&=&width=550&height=183")
+
+        user_roles = []
 
         if channel is None:
             return

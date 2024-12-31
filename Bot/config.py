@@ -18,11 +18,12 @@ database = mongo_client["Economy"]
 
 
 exts = {
-    "cogs.economy",
+    "cogs.rewards.economy",
     "cogs.error",
     "cogs.welcomer",
     "cogs.ticket.ticket",
     "cogs.essence.report",
+    "cogs.essence.requests"
 }
 
 class Bot(commands.Bot):

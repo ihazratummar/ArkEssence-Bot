@@ -119,7 +119,7 @@ class Economy(commands.Cog):
             embed = discord.Embed(
                 title="",
                 description=f"You don't have any Bushberries yet",
-                color=discord.Color.blurple(),
+                color= discord.Color.from_str("#ffb4f1"),
             )
 
         await ctx.send(embed = embed)
