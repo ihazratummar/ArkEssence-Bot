@@ -1,0 +1,5 @@
+discord.py
+python-dotenv
+github
+pymongo
+chat_exporter
