@@ -157,6 +157,34 @@ class Vaults(commands.Cog):
         else:
             await ctx.interaction.response.send_message(f"Your vault is: #{vault_number} and pin is: {user_data['pin']}", ephemeral=True)
 
+    @commands.hybrid_command("vaults")
+    async def vaults(self, ctx: commands.Context):
+        """Display a list of all vaults and their status."""
+        
+        embed = discord.Embed(
+            title="Vaults",
+            description="",
+            color=discord.Color.from_str("#ffb4f1")
+        )
+
+        for vault in self.vaults:
+            status = vault["status"]
+            assigned_to = vault["assigned_to"] 
+            assigned_Member = ctx.guild.get_member(int(assigned_to)) if status == "taken" else "None"
+            
+            embed.add_field(name=f"Vault #{vault['vault_number']} " + ("🟢" if status == "available" else "🔴"), value=f">>> Status: {status}\nAssigned to: {assigned_Member}", inline=True)
+
+        await ctx.send(embed=embed)
+
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        """Clear the vault assigned to a user when they leave the server."""
+        if self.is_user_vault_exist(user_id=member.id):
+            user_data = self.collection.find_one({"_id": str(member.id)})
+            vault_number = user_data["vault_number"]
+            self.clear_vault_by_id(vault_id=vault_number)
+
 
 
 

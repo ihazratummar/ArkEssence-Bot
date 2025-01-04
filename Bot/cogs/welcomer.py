@@ -19,12 +19,16 @@ class Welcomer(commands.Cog):
                 await member.add_roles(*roles)
             return
         
-        self.collection.insert_one({"_id": str(member.id),
-                                    "bbs": 0,
-                                    "name": member.name,
-                                    })
+        # Update the user record or insert it if it doesn't exist
+        self.collection.update_one(
+            {"_id": str(member.id)},  # Filter by user ID
+            {
+                "$set": {"name": member.name, "bbs": 0}  # Always update these fields
+            },
+            upsert=True  # Create a new document if it doesn't exist
+        )
 
-        channel_id = 1322481571995062332
+        channel_id = 1013016741485477935
         channel = member.guild.get_channel(channel_id)
 
         embed = discord.Embed(
