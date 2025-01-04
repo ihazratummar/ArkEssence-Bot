@@ -1,13 +1,13 @@
 import discord
 from discord.ext import commands
-
-
-
+from config import Bot
 
 
 class Welcomer(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: Bot):
         self.bot = bot
+        self.db = self.bot.database
+        self.collection = self.db["user_data"]  # Existing user data collection
 
 
     @commands.Cog.listener()
@@ -18,6 +18,11 @@ class Welcomer(commands.Cog):
             if roles[0] is not None:
                 await member.add_roles(*roles)
             return
+        
+        self.collection.insert_one({"_id": str(member.id),
+                                    "bbs": 0,
+                                    "name": member.name,
+                                    })
 
         channel_id = 1322481571995062332
         channel = member.guild.get_channel(channel_id)

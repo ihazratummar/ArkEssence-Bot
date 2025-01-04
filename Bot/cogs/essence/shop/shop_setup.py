@@ -1,5 +1,4 @@
 from time import sleep
-
 import discord
 import constants
 import time
@@ -421,13 +420,22 @@ class QuantityModal(discord.ui.Modal, title = "Quantity Selection"):
             # Send the message with the role mentions
 
             if self.isDino:
+                embed.title = "Dino Purchase Confirmation"
+                embed.description = f"Thank you {interaction.user.mention} for checking out our Dino Shop, You can apply the paint or complete the purchase here"
                 paint = DinoPaintJob(total_price= total_price, quantity= adjusted_qty, collection= self.collection, mention=mentions, log_channel=logger_channel, embed=embed)
-                await interaction.response.send_message(embed=embed, view=paint)
+                await interaction.response.send_message(embed=embed, view=paint , ephemeral= True)
             else:
                 self.collection.update_one({"_id": str(interaction.user.id)}, {"$inc": {"bbs": - total_price}})
 
                 if mentions:
-                    await logger_channel.send( f"{' '.join(mentions)}",embed=embed)
+                    user_data = self.collection.find_one({"_id": str(interaction.user.id)})
+                    vault_number = user_data.get("vault_number")
+                    pin = user_data.get("pin")
+                    log_embed = discord.Embed(title=embed.title, description=embed.description, color=embed.color)
+                    for field in embed.fields:
+                        log_embed.add_field(name=field.name, value=field.value, inline=field.inline)
+                    log_embed.add_field(name="Deliver to" , value=f"Vault #{vault_number} PIN: {pin}")
+                    await logger_channel.send( f"{' '.join(mentions)}",embed=log_embed)
                 else:
                     await interaction.response.send_message(embed=embed)  # Fallback if no roles found
 
@@ -446,16 +454,200 @@ class DinoPaintJob(discord.ui.View):
         self.embed =embed
 
         super().__init__(timeout=None)
-    @discord.ui.button(label="Apply Paint")
+    @discord.ui.button(label="Apply Paint", custom_id="apply_paint")
     async def apply_paint(self, interaction: discord.Interaction, button: discord.ui.Button):
+
+        color_image_list = [
+            "https://media.discordapp.net/attachments/1013016741984608280/1325060636467531807/1-25_colors.png?ex=677a6a62&is=677918e2&hm=186b83a9092a67eca0ff2b1e4e5762f19252cf8bc5477532fed5eeaf3e8932f8&=&format=webp&quality=lossless&width=350&height=350",
+            "https://media.discordapp.net/attachments/1013016741984608280/1325060690221989949/26-50_colors.png?ex=677a6a6e&is=677918ee&hm=b05b992e68f6388cbe3561caaf923e2145fcb052e63e717a42dad480b296be50&=&format=webp&quality=lossless&width=350&height=350",
+            "https://media.discordapp.net/attachments/1013016741984608280/1325060728172052490/51-75_colors.png?ex=677a6a78&is=677918f8&hm=19102cefb32f637c4cf5e5c3c2b473597575b43e51c09f1559d755425d25a4c1&=&format=webp&quality=lossless&width=350&height=350",
+            "https://media.discordapp.net/attachments/1013016741984608280/1325060756227752017/76-100_colors.png?ex=677a6a7e&is=677918fe&hm=0ff76574100874a3279398a3506f3fb0aaf3edd7c75a69594989fa2de0978251&=&format=webp&quality=lossless&width=499&height=499",
+            "https://media.discordapp.net/attachments/1013016741984608280/1325060787555008513/201-225_dyes_21.png?ex=677a6a86&is=67791906&hm=f3f5f65f46162384d4b8c5be592c8138bb833ab75f68e81be37d1c3bd8e13d58&=&format=webp&quality=lossless&width=588&height=499"
+        ]
+
+        view = ColorPagination(images= color_image_list, total_price= self.total_price, quantity= self.quantity, collection= self.collection, mention= self.mention, log_channel= self.log_channel, embed= self.embed)
+        embed = view.update_embed()
         button.disabled = True
-        await interaction.response.edit_message(content="Applied Paint", view= self)
+        await interaction.response.send_message( embed= embed, view= view , ephemeral= True)
 
     @discord.ui.button(label="Complete Purchase")
     async def complete(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.collection.update_one({"_id": str(interaction.user.id)}, {"$inc": {"bbs": -self.total_price}})
+        user_data = self.collection.find_one({"_id": str(interaction.user.id)})
+        vault_number = user_data.get("vault_number")
+        pin = user_data.get("pin")
         button.disabled = True
-        if self.mention:
-            await self.log_channel.send(f"{' '.join(self.mention)}", embed=self.embed)
 
-        await interaction.response.edit_message(embed=self.embed, view= self)
+        if self.mention:
+            log_embed = discord.Embed(title=self.embed.title, description=self.embed.description, color=self.embed.color)
+            for field in self.embed.fields:
+                log_embed.add_field(name=field.name, value=field.value, inline=field.inline)
+            log_embed.add_field(name="Deliver to" , value=f"Vault #{vault_number} PIN: {pin}")
+            await self.log_channel.send(f"{' '.join(self.mention)}", embed=log_embed)
+        
+        
+         # Prepare user-facing embed (without sensitive information)
+        user_embed = discord.Embed(title=self.embed.title, description=self.embed.description, color=self.embed.color)
+        for field in self.embed.fields:
+            user_embed.add_field(name=field.name, value=field.value, inline=field.inline)
+        user_embed.add_field(name="Status", value="Purchase completed successfully.", inline=False)
+
+        await interaction.response.edit_message(embed=user_embed, view=self)
+
+
+
+class ColorPagination(discord.ui.View):
+    def __init__(self, images,  total_price, quantity, collection, mention , log_channel, embed):
+        super().__init__(timeout=None)
+        self.images = images
+        self.current_index = 0
+        self.total_price = total_price
+        self.quantity = quantity
+        self.collection = collection
+        self.mention = mention
+        self.log_channel = log_channel
+        self.embed = embed
+
+    def update_embed(self):
+        """Creates or updates the embed with the current image."""
+        embed = discord.Embed(title=f"Colors {self.current_index + 1} of {len(self.images)}", color= self.embed.color)
+        embed.set_image(url=self.images[self.current_index])
+        return embed
+    
+    @discord.ui.button(label="<", style=discord.ButtonStyle.primary)
+    async def previouse(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_index > 0:
+            self.current_index -= 1
+            await interaction.response.edit_message(embed=self.update_embed(), view=self)
+        else:
+            await interaction.response.send_message("You're at the first image!", ephemeral=True)
+
+    @discord.ui.button(label=">", style=discord.ButtonStyle.primary)
+    async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_index < len(self.images) - 1:
+            self.current_index += 1
+            await interaction.response.edit_message(embed=self.update_embed(), view=self)
+        else:
+            await interaction.response.send_message("You're at the last image!", ephemeral=True)
+
+    @discord.ui.button(label="Apply", style=discord.ButtonStyle.primary, row=1)
+    async def apply(self, interaction: discord.Interaction, button: discord.ui.Button):
+        region_modal = RegionModal(total_price= self.total_price, quantity= self.quantity, collection= self.collection, mention= self.mention, log_channel= self.log_channel, embed= self.embed)
+        if region_modal:
+            button.disabled = True
+            self.stop()
+        await interaction.response.send_modal(region_modal)
+        
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger, row=1)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        button.disabled = True
+        await interaction.response.send_message("Color application cancelled.", ephemeral=True)
+        self.stop()
+
+
+class RegionModal(discord.ui.Modal):
+    def __init__(self, total_price, quantity, collection, mention , log_channel, embed):
+        self.total_price = total_price
+        self.quantity =  quantity
+        self.collection = collection
+        self.mention = mention
+        self.log_channel = log_channel
+        self.embed = embed
+        super().__init__(title="Region Selection")
+
+        self.region0 = discord.ui.TextInput(
+            label="Region 1",
+            placeholder="Main body (Primary color)",
+            required=False,
+            default="Default"
+        )
+        self.region1 = discord.ui.TextInput(
+            label="Region 2",
+            placeholder="Highlights or markings",
+            required=False,
+            default="Default"
+        )
+        self.region2 = discord.ui.TextInput(
+            label="Region 3",
+            placeholder="Secondary body parts (e.g., stripes, patterns)",
+            required=False,
+            default="Default"
+        )
+        self.region3 = discord.ui.TextInput(
+            label="Region 4",
+            placeholder="Additional markings or accents",
+            required=False,
+            default="Default"
+        )
+        self.region4 = discord.ui.TextInput(
+            label="Region 5 & Region 6",
+            placeholder="Specialized regions (e.g., wings, fins, or specific body sections)",
+            required=False,
+            default="Default"
+        )
+
+        
+
+        # Add all TextInput fields to the modal
+        self.add_item(self.region0)
+        self.add_item(self.region1)
+        self.add_item(self.region2)
+        self.add_item(self.region3)
+        self.add_item(self.region4)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Collect input data from all text fields
+        regions = [
+            self.region0.value,
+            self.region1.value,
+            self.region2.value,
+            self.region3.value,
+            self.region4.value
+        ]
+
+        is_default = all(value.lower() == "default" for value in regions)
+
+        if not is_default:
+            self.total_price += 200 * self.quantity  # Additional cost for custom paint job
+
+        # Format the response to the user
+        response = "\n".join(
+            f"**Region {i + 1}:** {value}" if i < 4 else f"**Region 5 & Region 6:** {value}" 
+            for i, value in enumerate(regions)
+    )
+
+        user_data = self.collection.find_one({"_id": str(interaction.user.id)})
+        self.collection.update_one({"_id": str(interaction.user.id)}, {"$inc": {"bbs": -self.total_price}})
+        vault_number = user_data.get("vault_number")
+        pin = user_data.get("pin")
+
+        log_embed = discord.Embed(title= "Dino Purchase Successful", description= f"Thank you {interaction.user.mention} for shopping here at Ark Essence, Please pick up your items at the Community Center in your vault", color=self.embed.color)
+        
+        log_embed.add_field(name="Item", value= self.embed.fields[0].value, inline= True)
+        log_embed.add_field(name="Gender", value= self.embed.fields[1].value, inline= True)
+        log_embed.add_field(name="Quantity", value= self.quantity, inline= True)
+        log_embed.add_field(name="Total Price", value= f"{constants.Emojis.bbs}{self.total_price}", inline= True)
+        log_embed.add_field(name="Deliver to" , value=f"Vault #{vault_number} PIN: {pin}", inline= True)
+
+        if not is_default:
+            log_embed.add_field(name="> Color Applied", value=f">>> {response}", inline= False)
+
+        await self.log_channel.send(f"{' '.join(self.mention)}", embed=log_embed)
+
+
+        # Prepare user-facing embed (without sensitive information)
+        user_embed = discord.Embed(title="Dino Purchase Successful", description=f"Thank you {interaction.user.mention} for shopping here at Ark Essence, Please pick up your items at the Community Center in your vault", color=self.embed.color)
+        user_embed.add_field(name="Item", value= self.embed.fields[0].value, inline= True)
+        user_embed.add_field(name="Gender", value= self.embed.fields[1].value, inline= True)
+        user_embed.add_field(name="Quantity", value= self.quantity, inline= True)
+        user_embed.add_field(name="Total Price", value= f"{constants.Emojis.bbs}{self.total_price}", inline= True)
+
+        if not is_default:
+            user_embed.add_field(name="> Color Applied", value=f">>> {response}" , inline= False)
+
+        await interaction.response.send_message(embed= user_embed)
+
+        return True
+
+
+    

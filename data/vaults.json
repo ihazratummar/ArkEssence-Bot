@@ -1,15 +1,15 @@
 [
     {
         "vault_number": 1,
-        "status": "Available",
-        "assigned_to": null,
-        "pin": null
+        "status": "taken",
+        "assigned_to": "475357995367137282",
+        "pin": 2945
     },
     {
         "vault_number": 2,
-        "status": "available",
-        "assigned_to": null,
-        "pin": null
+        "status": "taken",
+        "assigned_to": "874165342283370506",
+        "pin": 8657
     },
     {
         "vault_number": 3,

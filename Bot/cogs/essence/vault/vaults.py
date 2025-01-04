@@ -1,6 +1,5 @@
 import json
 import random
-
 import constants
 import  discord
 from discord.ext import commands
@@ -61,7 +60,7 @@ class Vaults(commands.Cog):
 
         user_id = user_data.get("_id")
 
-        self._update_vault(vault_number=vault_id, status="Available", assigned_to=None, pin= None)
+        self._update_vault(vault_number=vault_id, status="available", assigned_to=None, pin= None)
         self.collection.update_one(
             {"_id": user_id},
             {"$unset": {"vault_number": None, "pin": None}}
@@ -123,6 +122,7 @@ class Vaults(commands.Cog):
         await ctx.send("Please select a vault to claim:", view=view)
 
     @commands.hybrid_command("clear-vault")
+    @commands.has_permissions(administrator=True)
     async def release_vault(self, ctx: commands.Context, vault_number: int):
         await  ctx.defer()
 
@@ -135,6 +135,27 @@ class Vaults(commands.Cog):
         self.clear_vault_by_id(vault_id=vault_number)
 
         await ctx.send(f"Vault #{vault_number} has been cleared and is now available.")
+
+    @commands.hybrid_command("myvault")
+    async def myvault(self, ctx: commands.Context):
+        """Display the vault assigned to the user."""
+        user_data = self.collection.find_one({"_id": str(ctx.author.id)})
+
+        if user_data is None or "vault_number" not in user_data:
+            await ctx.send("You do not have a vault assigned.")
+            return
+
+        vault_number = user_data["vault_number"]
+        vault = next((v for v in self.vaults if v["vault_number"] == vault_number), None)
+
+        if vault is None:
+            await ctx.send("Your vault is no longer available.")
+            return
+
+        if not ctx.interaction:
+            await ctx.send(f"Your vault is: #{vault_number} use `/myvault` to check your pin")
+        else:
+            await ctx.interaction.response.send_message(f"Your vault is: #{vault_number} and pin is: {user_data['pin']}", ephemeral=True)
 
 
 
