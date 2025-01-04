@@ -1,0 +1,74 @@
+[
+    {
+        "vault_number": 1,
+        "status": "Available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 2,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 3,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 4,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 5,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 6,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 7,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 8,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 9,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 10,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 11,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    },
+    {
+        "vault_number": 12,
+        "status": "available",
+        "assigned_to": null,
+        "pin": null
+    }
+]

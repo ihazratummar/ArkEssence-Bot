@@ -22,7 +22,9 @@ exts = {
     "cogs.essence.report.report",
     "cogs.essence.requests.requests",
     "cogs.essence.shop.shop",
-    "cogs.utils"
+    "cogs.essence.vault.vaults",
+    "cogs.utils",
+
 }
 
 
