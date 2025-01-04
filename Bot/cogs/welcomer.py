@@ -21,11 +21,13 @@ class Welcomer(commands.Cog):
         
         # Update the user record or insert it if it doesn't exist
         self.collection.update_one(
-            {"_id": str(member.id)},  # Filter by user ID
-            {
-                "$set": {"name": member.name, "bbs": 0}  # Always update these fields
-            },
-            upsert=True  # Create a new document if it doesn't exist
+        {"_id": str(member.id)},  # Filter by user ID
+        {
+        "$set": {"name": member.name},  # Always update this field
+        "$setOnInsert": {  # Add these fields only if the document is new
+            "bbs": 0 }
+        },
+        upsert=True  # Create a new document if it doesn't exist
         )
 
         channel_id = 1013016741485477935
