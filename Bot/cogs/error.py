@@ -49,6 +49,8 @@ class ErrorCog(commands.Cog):
 
         elif isinstance(error, commands.MemberNotFound):
             return await ctx.send(f"Member not found.")
+        elif isinstance(error, commands.CheckFailure):
+            await ctx.send("You can not use this command here. use `/help`")
 
         else:
             # Logging the error or handling it in some way before re-raising

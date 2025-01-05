@@ -15,6 +15,11 @@ class Vaults(commands.Cog):
         self.vaults_file = "data/vaults.json"
         self.vaults = self._load_vaults()
 
+    def is_allowed_channel_or_admin(allowed_channel):
+        async def predicate(ctx: commands.Context):
+            return(ctx.author.guild_permissions.administrator or ctx.channel.id in allowed_channel)
+        return commands.check(predicate)
+
     def _load_vaults(self):
         """Load vaults from a JSON file or initialize them if the file does not exist."""
         try:
@@ -158,6 +163,7 @@ class Vaults(commands.Cog):
             await ctx.interaction.response.send_message(f"Your vault is: #{vault_number} and pin is: {user_data['pin']}", ephemeral=True)
 
     @commands.hybrid_command("vaults")
+    @is_allowed_channel_or_admin(allowed_channel=[1015764336221900870])
     async def vaults(self, ctx: commands.Context):
         """Display a list of all vaults and their status."""
         

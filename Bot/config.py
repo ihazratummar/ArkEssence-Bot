@@ -24,6 +24,7 @@ exts = {
     "cogs.essence.shop.shop",
     "cogs.essence.vault.vaults",
     "cogs.utils",
+    "cogs.help"
 
 }
 
