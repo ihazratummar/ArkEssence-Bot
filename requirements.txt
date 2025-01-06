@@ -1,5 +1,5 @@
 discord.py
 python-dotenv
-github
+PyGithub
 pymongo
 chat_exporter
